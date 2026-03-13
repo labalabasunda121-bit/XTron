@@ -1,0 +1,56 @@
+name: Terima Perintah dari DeepSeek
+
+on:
+  repository_dispatch:
+    types: [deepseek-command]
+
+jobs:
+  generate-dan-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Jalankan perintah
+        env:
+          COMMAND: ${{ github.event.client_payload.command }}
+        run: |
+          echo "📩 Menerima perintah: $COMMAND"
+          python -c "
+import json
+import os
+import requests
+
+command = os.environ.get('COMMAND', '')
+
+# Simulasi generate kode (nanti bisa panggil DeepSeek API)
+kode = f'''# Auto-generated oleh DeepSeek
+# Perintah: {command}
+
+def halo():
+    return \"Halo dari XTRON!\"
+
+if __name__ == \"__main__\":
+    print(halo())
+'''
+
+filename = 'generated.py'
+with open(filename, 'w') as f:
+    f.write(kode)
+
+print(f'✅ File {filename} berhasil dibuat')
+"
+
+      - name: Commit & Push
+        run: |
+          git config user.name "deepseek-bot"
+          git config user.email "bot@deepseek.com"
+          git add .
+          git commit -m "🤖 Auto dari DeepSeek: ${{ github.event.client_payload.command }}"
+          git push
+          echo "✅ Berhasil push ke GitHub!"
